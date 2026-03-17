@@ -605,7 +605,8 @@ STDMETHODIMP CDecAvcodec::InitDecoder(AVCodecID codec, const CMediaType *pmt, co
                       (m_pAVCodec->capabilities & (AV_CODEC_CAP_DELAY | AV_CODEC_CAP_FRAME_THREADS));
 
     // Stop time is unreliable, drop it and calculate it
-    m_bCalculateStopTime = (codec == AV_CODEC_ID_H264 || codec == AV_CODEC_ID_DIRAC ||
+    m_bCalculateStopTime = (codec == AV_CODEC_ID_CAVS || codec == AV_CODEC_ID_AVS2 || codec == AV_CODEC_ID_AVS3 ||
+                            codec == AV_CODEC_ID_H264 || codec == AV_CODEC_ID_DIRAC ||
                             (codec == AV_CODEC_ID_MPEG4 && pmt->formattype == FORMAT_MPEG2Video) ||
                             (codec == AV_CODEC_ID_VC1 && !(dwDecFlags & LAV_VIDEO_DEC_FLAG_ONLY_DTS)));
 

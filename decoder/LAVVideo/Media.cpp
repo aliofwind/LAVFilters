@@ -35,6 +35,15 @@ typedef struct
 // clang-format off
 // Map Media Subtype <> FFMPEG Codec Id
 static const FFMPEG_SUBTYPE_MAP lavc_video_codecs[] = {
+  //AVS3
+  { &MEDIASUBTYPE_AVS3, AV_CODEC_ID_AVS3 },
+
+  //AVS2
+  { &MEDIASUBTYPE_AVS2, AV_CODEC_ID_AVS2 },
+
+  //CAVS
+  { &MEDIASUBTYPE_CAVS, AV_CODEC_ID_CAVS },
+
   // H264
   { &MEDIASUBTYPE_H264, AV_CODEC_ID_H264 },
   { &MEDIASUBTYPE_h264, AV_CODEC_ID_H264 },
@@ -313,7 +322,6 @@ static const FFMPEG_SUBTYPE_MAP lavc_video_codecs[] = {
   { &MEDIASUBTYPE_WNV1, AV_CODEC_ID_WNV1 },
   { &MEDIASUBTYPE_CYUV, AV_CODEC_ID_CYUV },
   { &MEDIASUBTYPE_AVS1, AV_CODEC_ID_ASV1 },
-  { &MEDIASUBTYPE_AVS2, AV_CODEC_ID_ASV2 },
   { &MEDIASUBTYPE_AVRn, AV_CODEC_ID_AVRN },
   { &MEDIASUBTYPE_SP5X, AV_CODEC_ID_SP5X },
   { &MEDIASUBTYPE_SP54, AV_CODEC_ID_SP5X },
@@ -351,6 +359,15 @@ static const FFMPEG_SUBTYPE_MAP lavc_video_codecs[] = {
 
 // Define Input Media Types
 const AMOVIESETUP_MEDIATYPE CLAVVideo::sudPinTypesIn[] = {
+  //AVS3
+  { &MEDIATYPE_Video, &MEDIASUBTYPE_AVS3},
+
+  //AVS2
+  { &MEDIATYPE_Video, &MEDIASUBTYPE_AVS2},
+
+  //CAVS
+  { &MEDIATYPE_Video, &MEDIASUBTYPE_CAVS},
+
   // H264
   { &MEDIATYPE_Video, &MEDIASUBTYPE_H264 },
   { &MEDIATYPE_Video, &MEDIASUBTYPE_h264 },
@@ -699,6 +716,9 @@ AVCodecID FindCodecId(const CMediaType *mt)
 // Order is Important, has to be the same as the CC Enum
 // Also, the order is used for storage in the Registry
 static codec_config_t m_codec_config[] = {
+  { 1, { AV_CODEC_ID_AVS3 }},                                                // Codec_AVS3
+  { 1, { AV_CODEC_ID_AVS2 }},                                                // Codec_AVS2
+  { 1, { AV_CODEC_ID_CAVS }},                                                // Codec_CAVS
   { 1, { AV_CODEC_ID_H264 }},                                                // Codec_H264
   { 2, { AV_CODEC_ID_VC1, AV_CODEC_ID_VC1IMAGE }},                           // Codec_VC1
   { 1, { AV_CODEC_ID_MPEG1VIDEO }, "mpeg1"},                                 // Codec_MPEG1

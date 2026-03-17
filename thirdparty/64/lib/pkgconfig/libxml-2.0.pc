@@ -1,4 +1,4 @@
-prefix=.
+prefix=../..
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
@@ -8,6 +8,6 @@ Name: libXML
 Version: 2.11.5
 Description: libXML library version2.
 Requires:
-Libs: -L${libdir} -lxml2
+Libs: -L${libdir} -lxml2 -lz
 Libs.private: -lz     -lm
 Cflags: -I${includedir}/libxml2  -DLIBXML_STATIC
