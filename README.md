@@ -1,8 +1,12 @@
 本魔改版整合了以下项目的部分修改，特此鸣谢：
 https://github.com/xatabhk/LAVFilters-AVS2-CAVS-AVS3
+
 https://github.com/xatabhk/davs2-10bit
+
 https://github.com/nilaoda/iina-avs
+
 https://github.com/nilaoda/FFmpegSharedLibraries
+
 https://github.com/maliwen2015/ffmpeg_cavs_dra
 
 LAV Filters - ffmpeg based DirectShow Splitter and Decoders
