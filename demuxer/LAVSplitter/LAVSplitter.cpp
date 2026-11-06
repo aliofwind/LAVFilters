@@ -151,6 +151,8 @@ STDMETHODIMP CLAVSplitter::LoadDefaults()
     m_settings.QueueMaxMemSize = 256;
     m_settings.NetworkAnalysisDuration = 1000;
 
+    m_settings.DemuxEnhancementLayer = FALSE;
+
     for (const FormatInfo &fmt : m_InputFormats)
     {
         m_settings.formats[std::string(fmt.strName)] = get_iformat_default(fmt.strName);
@@ -332,7 +334,7 @@ STDMETHODIMP CLAVSplitter::NonDelegatingQueryInterface(REFIID riid, void **ppv)
     }
 
     return QI(IMediaSeeking) QI(IAMStreamSelect) QI(ISpecifyPropertyPages) QI(ISpecifyPropertyPages2) QI2(ILAVFSettings)
-        QI2(ILAVFSettingsInternal) QI(IObjectWithSite) QI(IBufferInfo) __super::NonDelegatingQueryInterface(riid, ppv);
+        QI2(ILAVFSettingsInternal) QI2(ILAVFSettingsEnhancementLayers) QI(IObjectWithSite) QI(IBufferInfo) __super::NonDelegatingQueryInterface(riid, ppv);
 }
 
 // ISpecifyPropertyPages2
@@ -378,8 +380,9 @@ STDMETHODIMP CLAVSplitter::CreatePage(const GUID &guid, IPropertyPage **ppPage)
 // IObjectWithSite
 STDMETHODIMP CLAVSplitter::SetSite(IUnknown *pUnkSite)
 {
-    // AddRef to store it for later
-    pUnkSite->AddRef();
+    // Retain the new site before releasing the old one, which may be the same object.
+    if (pUnkSite)
+        pUnkSite->AddRef();
 
     // Release the old one
     SafeRelease(&m_pSite);
@@ -399,15 +402,8 @@ STDMETHODIMP CLAVSplitter::GetSite(REFIID riid, void **ppvSite)
         return E_FAIL;
     }
 
-    IUnknown *pSite = nullptr;
-    HRESULT hr = m_pSite->QueryInterface(riid, (void **)&pSite);
-    if (SUCCEEDED(hr) && pSite)
-    {
-        pSite->AddRef();
-        *ppvSite = pSite;
-        return S_OK;
-    }
-    return E_NOINTERFACE;
+    // QueryInterface supplies the reference owned by the caller.
+    return m_pSite->QueryInterface(riid, ppvSite);
 }
 
 // IBufferInfo
@@ -702,6 +698,27 @@ STDMETHODIMP CLAVSplitter::InitDemuxer()
         else
         {
             delete pPin;
+        }
+    }
+
+    // video enhancement layer stream
+    if (videoStream && m_settings.DemuxEnhancementLayer)
+    {
+        const CBaseDemuxer::stream *videoELStream = m_pDemuxer->SelectVideoELStream(videoStream->pid);
+        if (videoELStream)
+        {
+            CLAVOutputPin *pPin = new CLAVOutputPin(videoELStream->streamInfo->mtypes, L"~EL", this,
+                                                    this, &hr, CBaseDemuxer::video_el, m_pDemuxer->GetContainerFormat());
+            if (SUCCEEDED(hr))
+            {
+                pPin->SetStreamId(videoELStream->pid);
+                m_pPins.push_back(pPin);
+                m_pDemuxer->SetActiveStream(CBaseDemuxer::video_el, videoELStream->pid);
+            }
+            else
+            {
+                delete pPin;
+            }
         }
     }
 
@@ -1504,6 +1521,9 @@ STDMETHODIMP CLAVSplitter::Count(DWORD *pcStreams)
     *pcStreams = 0;
     for (int i = 0; i < CBaseDemuxer::unknown; i++)
     {
+        if (i == CBaseDemuxer::video_el && !m_settings.DemuxEnhancementLayer)
+            continue;
+
         CBaseDemuxer::CStreamList* pStreamList = m_pDemuxer->GetStreams((CBaseDemuxer::StreamType)i);
         if (pStreamList)
             *pcStreams += (DWORD)pStreamList->size();
@@ -1591,6 +1611,9 @@ STDMETHODIMP CLAVSplitter::Info(long lIndex, AM_MEDIA_TYPE **ppmt, DWORD *pdwFla
     int i, j;
     for (i = 0, j = 0; i < CBaseDemuxer::unknown; i++)
     {
+        if (i == CBaseDemuxer::video_el && !m_settings.DemuxEnhancementLayer)
+            continue;
+
         CBaseDemuxer::CStreamList *streams = m_pDemuxer->GetStreams((CBaseDemuxer::StreamType)i);
         int cnt = (int)streams->size();
 
@@ -2095,6 +2118,17 @@ STDMETHODIMP CLAVSplitter::SetStreamSwitchReselectSubtitles(BOOL bEnabled)
 STDMETHODIMP_(BOOL) CLAVSplitter::GetStreamSwitchReselectSubtitles()
 {
     return m_settings.StreamSwitchReselectSubs;
+}
+
+STDMETHODIMP CLAVSplitter::SetDemuxVideoEnhancementLayers(BOOL bEnabled)
+{
+    m_settings.DemuxEnhancementLayer = bEnabled;
+    return S_OK;
+}
+
+STDMETHODIMP_(BOOL) CLAVSplitter::GetDemuxVideoEnhancementLayers()
+{
+    return m_settings.DemuxEnhancementLayer;
 }
 
 STDMETHODIMP CLAVSplitter::SetTrayIcon(BOOL bEnabled)

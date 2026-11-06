@@ -65,7 +65,7 @@ configure() (
     --disable-muxers                \
     --enable-muxer=spdif            \
     --disable-bsfs                  \
-    --enable-bsf=extract_extradata  \
+    --enable-bsf=extract_extradata,dovi_split \
     --disable-avdevice              \
     --disable-encoders              \
     --disable-devices               \
@@ -90,8 +90,8 @@ configure() (
     --disable-stripping             \
     --arch=${arch}"
 
-  EXTRA_CFLAGS="-fno-tree-vectorize -D_WIN32_WINNT=0x0600 -DWINVER=0x0600 -gdwarf-5"
-  EXTRA_LDFLAGS="-lwinpthread"
+  EXTRA_CFLAGS="-fno-tree-vectorize -D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -gdwarf-5"
+  EXTRA_LDFLAGS=""
   PKG_CONFIG_PREFIX_DIR=""
   ROOT_DIR=$(cd .. && pwd)
   if [ "${arch}" = "x86_64" ]; then

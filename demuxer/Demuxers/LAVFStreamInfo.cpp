@@ -30,7 +30,7 @@
 #include <vector>
 #include <sstream>
 
-CLAVFStreamInfo::CLAVFStreamInfo(AVFormatContext *avctx, AVStream *avstream, const char *containerFormat, HRESULT &hr)
+CLAVFStreamInfo::CLAVFStreamInfo(AVFormatContext *avctx, AVStream *avstream, const char *containerFormat, HRESULT &hr, bool bIsVideoELStream)
     : CStreamInfo()
     , m_containerFormat(containerFormat)
 {
@@ -42,7 +42,7 @@ CLAVFStreamInfo::CLAVFStreamInfo(AVFormatContext *avctx, AVStream *avstream, con
     default: hr = E_FAIL; break;
     }
 
-    codecInfo = lavf_get_stream_description(avstream);
+    codecInfo = lavf_get_stream_description(avstream, bIsVideoELStream);
 }
 
 CLAVFStreamInfo::~CLAVFStreamInfo()
@@ -372,6 +372,11 @@ STDMETHODIMP CLAVFStreamInfo::CreateVideoMediaType(AVFormatContext *avctx, AVStr
     {
         mtype.formattype = FORMAT_VideoInfo2;
     }
+
+    // Uncompressed video carries its field order in the container, so retain it in a VideoInfo2 header.
+    if ((avstream->codecpar->codec_id == AV_CODEC_ID_V210 || avstream->codecpar->codec_id == AV_CODEC_ID_RAWVIDEO) &&
+        avstream->codecpar->field_order > AV_FIELD_PROGRESSIVE)
+        mtype.formattype = FORMAT_VideoInfo2;
 
     if (mtype.formattype == FORMAT_VideoInfo)
     {

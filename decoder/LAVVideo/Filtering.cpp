@@ -45,11 +45,9 @@ HRESULT CLAVVideo::Filter(LAVFrame *pFrame)
     if (m_Decoder.IsInterlaced(FALSE) && m_settings.DeintMode != DeintMode_Disable &&
         m_settings.SWDeintMode != SWDeintMode_None &&
         ((bFlush && m_pFilterGraph) || pFrame->format == LAVPixFmt_YUV420 || pFrame->format == LAVPixFmt_YUV422 ||
-         pFrame->format == LAVPixFmt_NV12))
+         pFrame->format == LAVPixFmt_NV12 || pFrame->format == LAVPixFmt_YUV422bX))
     {
-        AVPixelFormat ff_pixfmt = (pFrame->format == LAVPixFmt_YUV420)
-                                      ? AV_PIX_FMT_YUV420P
-                                      : (pFrame->format == LAVPixFmt_YUV422) ? AV_PIX_FMT_YUV422P : AV_PIX_FMT_NV12;
+        AVPixelFormat ff_pixfmt = bFlush ? AV_PIX_FMT_NONE : getFFPixelFormatFromLAV(pFrame->format, pFrame->bpp);
 
         if (!bFlush && (!m_pFilterGraph || pFrame->format != m_filterPixFmt || pFrame->width != m_filterWidth ||
                         pFrame->height != m_filterHeight))
@@ -84,8 +82,8 @@ HRESULT CLAVVideo::Filter(LAVFrame *pFrame)
                 aspect_ratio = {0, 1};
 
             _snprintf_s(args, sizeof(args), "video_size=%dx%d:pix_fmt=%s:time_base=1/10000000:pixel_aspect=%d/%d",
-                        pFrame->width, pFrame->height, av_get_pix_fmt_name(ff_pixfmt), pFrame->aspect_ratio.num,
-                        pFrame->aspect_ratio.den);
+                        pFrame->width, pFrame->height, av_get_pix_fmt_name(ff_pixfmt), aspect_ratio.num,
+                        aspect_ratio.den);
             ret = avfilter_graph_create_filter(&m_pFilterBufferSrc, buffersrc, "in", args, nullptr, m_pFilterGraph);
             if (ret < 0)
             {
@@ -233,9 +231,10 @@ HRESULT CLAVVideo::Filter(LAVFrame *pFrame)
                 rtDuration >>= 1;
 
             // Copy most settings over
-            outFrame->format = (out_frame->format == AV_PIX_FMT_YUV420P)
-                                   ? LAVPixFmt_YUV420
-                                   : (out_frame->format == AV_PIX_FMT_YUV422P) ? LAVPixFmt_YUV422 : LAVPixFmt_NV12;
+            AVPixelFormatMapping map = getFFToLAVPixFmtMapping((AVPixelFormat)out_frame->format);
+            ASSERT(map.conversion == false);
+            outFrame->format = map.lavpixfmt;
+            outFrame->bpp = map.bpp;
             outFrame->sw_format = outFrame->format;
             outFrame->bpp = pFrame->bpp;
             outFrame->ext_format = pFrame->ext_format;
